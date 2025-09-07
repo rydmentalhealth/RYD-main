@@ -1,9 +1,40 @@
+// prisma/schema.prisma
+
+// === Datasource ===
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// === Generator ===
 generator client {
   provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
 }
+
+// === Models ===
+
+// User table for your app
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // optional: relation to sessions
+  sessions  Session[]
+}
+
+// Optional: sessions table for authentication (NextAuth / Supabase)
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id])
+}
+
