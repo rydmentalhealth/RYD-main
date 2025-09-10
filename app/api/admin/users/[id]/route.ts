@@ -21,13 +21,15 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
     
     const { id } = await params;
-    
+    const idNum = parseInt(id, 10);
+
+if (isNaN(idNum)) {
+  return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+}
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id: idNum },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
         name: true,
         email: true,
         avatar: true,

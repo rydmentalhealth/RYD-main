@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           email: true,
-          firstName: true,
-          lastName: true,
+          name: true,
+          updatedAt: true,
           createdAt: true
         },
         orderBy: {

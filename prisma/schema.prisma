@@ -1,15 +1,12 @@
 // prisma/schema.prisma
 
-// === Datasource ===
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-// === Generator ===
-generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 // === Models ===
@@ -24,7 +21,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // optional: relation to sessions
-  sessions  Session[]
+  sessions Session[]
 }
 
 // Optional: sessions table for authentication (NextAuth / Supabase)
@@ -37,4 +34,3 @@ model Session {
 
   user User @relation(fields: [userId], references: [id])
 }
-
