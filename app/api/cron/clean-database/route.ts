@@ -13,17 +13,8 @@ export async function GET() {
     // Delete expired sessions
     const deletedSessions = await db.session.deleteMany({
       where: {
-        expires: {
+        expiresAt: {
           lt: thirtyDaysAgo
-        }
-      }
-    });
-    
-    // Delete expired verification tokens
-    const deletedTokens = await db.verificationToken.deleteMany({
-      where: {
-        expires: {
-          lt: now
         }
       }
     });
@@ -32,7 +23,6 @@ export async function GET() {
       success: true,
       message: "Database cleanup completed successfully",
       deletedSessions: deletedSessions.count,
-      deletedTokens: deletedTokens.count,
       timestamp: now.toISOString()
     });
   } catch (error) {

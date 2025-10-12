@@ -76,10 +76,15 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
     
     const { id } = await params;
+    const idNum = parseInt(id, 10);
+
+    if (isNaN(idNum)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
     
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: idNum },
       select: { id: true, email: true, role: true }
     });
     
@@ -88,7 +93,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
     
     // Prevent self-deletion
-    if (existingUser.id === session.user.id) {
+    if (existingUser.id === parseInt(session.user.id, 10)) {
       return NextResponse.json({ 
         error: "You cannot delete your own account" 
       }, { status: 400 });
@@ -105,7 +110,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     
     // Delete user (this will cascade to related records due to foreign key constraints)
     await prisma.user.delete({
-      where: { id },
+      where: { id: idNum },
     });
     
     return NextResponse.json({ message: "User deleted successfully" });

@@ -8,6 +8,9 @@ declare global {
 
 export const prisma = global.prismaGlobal ?? new PrismaClient();
 
+// Export as 'db' for backward compatibility
+export const db = prisma;
+
 if (process.env.NODE_ENV !== 'production') {
   global.prismaGlobal = prisma;
 }

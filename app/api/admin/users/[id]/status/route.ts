@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { UserStatus } from "@/lib/generated/prisma";
+import { UserStatus } from "@prisma/client";
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -22,6 +22,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
     
     const { id } = await params;
+    const idNum = parseInt(id, 10);
+
+    if (isNaN(idNum)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+    
     const data = await req.json();
     
     // Validate status
@@ -34,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
-      where: { id },
+      where: { id: idNum },
       select: { id: true, email: true, status: true, role: true }
     });
     
@@ -43,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
     
     // Prevent self-modification of status
-    if (existingUser.id === session.user.id) {
+    if (existingUser.id === parseInt(session.user.id, 10)) {
       return NextResponse.json({ 
         error: "You cannot modify your own status" 
       }, { status: 400 });
@@ -70,7 +76,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
     
     const updatedUser = await prisma.user.update({
-      where: { id },
+      where: { id: idNum },
       data: updateData,
       select: {
         id: true,

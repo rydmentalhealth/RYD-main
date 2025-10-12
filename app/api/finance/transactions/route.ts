@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { z } from "zod"
-import { PrismaClient } from "@/lib/generated/prisma"
+import { PrismaClient, TransactionCategory } from "@prisma/client"
 
 // Schema for validating POST request
 const transactionSchema = z.object({
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         amount: validatedData.amount,
         date: validatedData.date,
         description: validatedData.description,
-        category: validatedData.category,
+        category: validatedData.category as TransactionCategory,
         projectId: validatedData.projectId || undefined,
       },
     })
