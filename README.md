@@ -1,4 +1,4 @@
-# Restore Your Dignity (RYD)
+# REFUGEES YOUTH PWDs (RYD)
 
 A modern, responsive website for Restore Your Dignity, an organization dedicated to supporting mental health and well-being through community and resources.
 
