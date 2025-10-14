@@ -88,6 +88,13 @@ enum TransactionCategory {
   OTHER
 }
 
+enum DocumentAccess {
+  PUBLIC
+  ALL_STAFF
+  STAFF_ONLY
+  ADMIN_ONLY
+}
+
 // === Models ===
 
 // User table for your app
@@ -130,6 +137,8 @@ model User {
   taskComments    TaskComment[]
   timeEntries     TimeEntry[]
   transactions    FinancialTransaction[]
+  ownedProjects   Project[]      @relation("ProjectOwner")
+  uploadedDocuments Document[]
 }
 
 // Optional: sessions table for authentication (NextAuth / Supabase)
@@ -177,6 +186,7 @@ model Project {
   startDate   DateTime
   endDate     DateTime?
   status      ProjectStatus @default(PLANNING)
+  ownerId     Int?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -184,6 +194,8 @@ model Project {
   tasks         Task[]
   members       ProjectMember[]
   transactions  FinancialTransaction[]
+  documents     Document[]
+  owner         User?        @relation("ProjectOwner", fields: [ownerId], references: [id])
 }
 
 model TaskAssignee {
@@ -307,4 +319,39 @@ model FinancialTransaction {
   // Relations
   creator User?    @relation(fields: [createdById], references: [id])
   project Project? @relation(fields: [projectId], references: [id])
+}
+
+model DocumentCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  documents Document[]
+}
+
+model Document {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  isPublic    Boolean       @default(false)
+  accessLevel DocumentAccess @default(ALL_STAFF)
+  tags        String?
+  categoryId  String?
+  projectId   String?
+  uploadedById Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  category   DocumentCategory? @relation(fields: [categoryId], references: [id])
+  project    Project?          @relation(fields: [projectId], references: [id])
+  uploadedBy User?             @relation(fields: [uploadedById], references: [id])
 }

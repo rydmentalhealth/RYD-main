@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         fileType: data.fileType,
         fileSize: data.fileSize,
         categoryId: data.categoryId,
-        uploadedById: session.user.id,
+        uploadedById: parseInt(session.user.id, 10),
         projectId: data.projectId || null,
         accessLevel: data.accessLevel || "ALL_STAFF",
         isPublic: data.isPublic || false,
@@ -163,7 +163,7 @@ export async function PATCH(req: NextRequest) {
     }
     
     // Check if user is the owner or an admin
-    if (existingDocument.uploadedById !== session.user.id && session.user.role !== "ADMIN") {
+    if (existingDocument.uploadedById !== parseInt(session.user.id, 10) && session.user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "You don't have permission to update this document" },
         { status: 403 }
@@ -236,7 +236,7 @@ export async function DELETE(req: NextRequest) {
     }
     
     // Check if user is the owner or an admin
-    if (existingDocument.uploadedById !== session.user.id && session.user.role !== "ADMIN") {
+    if (existingDocument.uploadedById !== parseInt(session.user.id, 10) && session.user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "You don't have permission to delete this document" },
         { status: 403 }

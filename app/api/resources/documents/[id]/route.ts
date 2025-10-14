@@ -50,7 +50,7 @@ export async function GET(
     // Check permissions if document is not public
     if (!document.isPublic) {
       // Admin and owner can access any document
-      if (session.user.role !== "ADMIN" && document.uploadedById !== session.user.id) {
+      if (session.user.role !== "ADMIN" && document.uploadedById !== parseInt(session.user.id, 10)) {
         // For non-admins and non-owners, check access level
         if (document.accessLevel === "ADMIN_ONLY") {
           return NextResponse.json({ error: "You don't have permission to view this document" }, { status: 403 })
@@ -95,7 +95,7 @@ export async function PATCH(
     }
     
     // Check if user is the owner or an admin
-    if (existingDocument.uploadedById !== session.user.id && session.user.role !== "ADMIN") {
+    if (existingDocument.uploadedById !== parseInt(session.user.id, 10) && session.user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "You don't have permission to update this document" },
         { status: 403 }
@@ -166,7 +166,7 @@ export async function DELETE(
     }
     
     // Check if user is the owner or an admin
-    if (existingDocument.uploadedById !== session.user.id && session.user.role !== "ADMIN") {
+    if (existingDocument.uploadedById !== parseInt(session.user.id, 10) && session.user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "You don't have permission to delete this document" },
         { status: 403 }

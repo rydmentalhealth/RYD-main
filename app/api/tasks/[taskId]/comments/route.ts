@@ -99,7 +99,7 @@ export async function POST(
       data: {
         content: data.content,
         taskId: taskId,
-        authorId: userId,
+        authorId: parseInt(userId, 10),
       },
       include: {
         author: {

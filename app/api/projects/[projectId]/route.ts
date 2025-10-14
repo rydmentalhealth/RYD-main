@@ -21,7 +21,7 @@ export async function GET(
         id: projectId,
       },
       include: {
-        team: {
+        members: {
           include: {
             user: {
               select: {
@@ -124,11 +124,11 @@ export async function PATCH(
       
       // Find IDs to add and remove
       const idsToAdd = body.members.filter((id: string) => 
-        !currentMemberIds.includes(id)
+        !currentMemberIds.includes(parseInt(id, 10))
       );
       
       const idsToRemove = currentMemberIds.filter(id => 
-        !body.members.includes(id)
+        !body.members.includes(id.toString())
       );
       
       // Remove members that are no longer assigned
@@ -148,7 +148,7 @@ export async function PATCH(
         await prisma.projectMember.createMany({
           data: idsToAdd.map((id: string) => ({
             projectId,
-            userId: id,
+            userId: parseInt(id, 10),
             role: "MEMBER"
           })),
           skipDuplicates: true
@@ -162,7 +162,7 @@ export async function PATCH(
         id: projectId,
       },
       include: {
-        team: {
+        members: {
           include: {
             user: {
               select: {
