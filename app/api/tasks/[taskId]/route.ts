@@ -35,7 +35,7 @@ export async function GET(
             },
           },
         },
-        createdBy: {
+        creator: {
           select: {
             id: true,
             firstName: true,
@@ -136,10 +136,10 @@ export async function PUT(
         assignees: true,
         project: {
           include: {
-            team: true
+            members: true
           }
         },
-        createdBy: true
+        creator: true
       }
     });
     
@@ -151,9 +151,9 @@ export async function PUT(
     const { canEdit } = checkTaskPermissions(
       user.role, 
       user.status, 
-      user.id, 
-      existingTask.createdById || undefined,
-      existingTask.assignees.map(a => a.userId),
+      user.id.toString(), 
+      existingTask.createdById?.toString() || undefined,
+      existingTask.assignees.map(a => a.userId.toString()),
       existingTask.project?.ownerId
     );
     
@@ -238,7 +238,7 @@ export async function PUT(
       const assigneeIds = Array.isArray(data.assigneeIds) ? data.assigneeIds : [data.assigneeIds];
       
       // Get current assignee IDs
-      const currentAssigneeIds = existingTask.assignees.map(a => a.userId);
+      const currentAssigneeIds = existingTask.assignees.map(a => a.userId.toString());
       
       // Find IDs to add and remove
       const idsToAdd = assigneeIds.filter((id: string) => !currentAssigneeIds.includes(id));
@@ -282,7 +282,7 @@ export async function PUT(
             },
           },
         },
-        createdBy: {
+        creator: {
           select: {
             id: true,
             firstName: true,
@@ -357,10 +357,10 @@ export async function DELETE(
         assignees: true,
         project: {
           include: {
-            team: true
+            members: true
           }
         },
-        createdBy: true
+        creator: true
       }
     });
     
@@ -372,9 +372,9 @@ export async function DELETE(
     const { canDelete } = checkTaskPermissions(
       user.role, 
       user.status, 
-      user.id, 
-      existingTask.createdById || undefined,
-      existingTask.assignees.map(a => a.userId),
+      user.id.toString(), 
+      existingTask.createdById?.toString() || undefined,
+      existingTask.assignees.map(a => a.userId.toString()),
       existingTask.project?.ownerId
     );
     
@@ -446,10 +446,10 @@ export async function PATCH(
         assignees: true,
         project: {
           include: {
-            team: true
+            members: true
           }
         },
-        createdBy: true
+        creator: true
       }
     });
     
@@ -461,9 +461,9 @@ export async function PATCH(
     const { canEdit } = checkTaskPermissions(
       user.role, 
       user.status, 
-      user.id, 
-      existingTask.createdById || undefined,
-      existingTask.assignees.map(a => a.userId),
+      user.id.toString(), 
+      existingTask.createdById?.toString() || undefined,
+      existingTask.assignees.map(a => a.userId.toString()),
       existingTask.project?.ownerId
     );
     
@@ -548,7 +548,7 @@ export async function PATCH(
       const assigneeIds = Array.isArray(data.assigneeIds) ? data.assigneeIds : [data.assigneeIds];
       
       // Get current assignee IDs
-      const currentAssigneeIds = existingTask.assignees.map(a => a.userId);
+      const currentAssigneeIds = existingTask.assignees.map(a => a.userId.toString());
       
       // Find IDs to add and remove
       const idsToAdd = assigneeIds.filter((id: string) => !currentAssigneeIds.includes(id));
@@ -592,7 +592,7 @@ export async function PATCH(
             },
           },
         },
-        createdBy: {
+        creator: {
           select: {
             id: true,
             firstName: true,

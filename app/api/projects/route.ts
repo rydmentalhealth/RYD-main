@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkProjectPermissions, hasPermission } from "@/lib/auth/rbac";
 import { auth } from "@/lib/auth";
-import { UserRole, UserStatus, ProjectStatus, ProjectPriority } from "@/lib/generated/prisma";
+import { UserRole, UserStatus, ProjectStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 
 // GET /api/projects - Get projects with permission filtering
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       filters.OR = [
         { ownerId: user.id },
         { 
-          team: {
+          members: {
             some: {
               userId: user.id
             }
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         createdAt: "desc",
       },
       include: {
-        team: {
+        members: {
           include: {
             user: {
               select: {
@@ -134,13 +134,13 @@ export async function GET(request: NextRequest) {
 
     // Filter projects based on individual permissions
     const filteredProjects = projects.filter(project => {
-      const projectMemberIds = project.team.map((m: any) => m.user.id);
+      const projectMemberIds = project.members.map((m: any) => m.user.id);
       const permissions = checkProjectPermissions(
         user.role,
         user.status,
-        user.id,
-        project.ownerId,
-        projectMemberIds
+        user.id.toString(),
+        project.ownerId?.toString(),
+        projectMemberIds.map(id => id.toString())
       );
       console.log("[API Projects] Project", project.name, "- Can view:", permissions.canView, "Owner:", project.ownerId, "User:", user.id);
       return permissions.canView;
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
     // Transform the data to match existing structure with members field
     const transformedProjects = filteredProjects.map(project => ({
       ...project,
-      members: project.team.map((pm: any) => pm.user)
+      members: project.members.map((pm: any) => pm.user)
     }));
 
     console.log("[API Projects] Returning", transformedProjects.length, "projects");
@@ -227,17 +227,17 @@ export async function POST(request: NextRequest) {
         name: data.name,
         description: data.description,
         status: data.status || "PLANNING",
-        startDate: data.startDate ? new Date(data.startDate) : null,
+        startDate: data.startDate ? new Date(data.startDate) : new Date(),
         endDate: data.endDate ? new Date(data.endDate) : null,
         ownerId: user.id,
-        team: {
+        members: {
           create: memberIds.map((id: string) => ({
-            userId: id
+            userId: parseInt(id, 10)
           }))
         }
       },
       include: {
-        team: {
+        members: {
           include: {
             user: {
               select: {
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
     // Transform the data to match existing structure with members field
     const transformedProject = {
       ...project,
-      members: project.team.map((pm: any) => pm.user)
+      members: project.members.map((pm: any) => pm.user)
     };
     
     return NextResponse.json(transformedProject);

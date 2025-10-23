@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/lib/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { auth } from "@/lib/auth";
 
 const prisma = new PrismaClient();
@@ -99,7 +99,7 @@ export async function POST(
       data: {
         content: data.content,
         taskId: taskId,
-        authorId: userId,
+        authorId: parseInt(userId, 10),
       },
       include: {
         author: {

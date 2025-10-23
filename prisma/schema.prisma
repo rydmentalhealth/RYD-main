@@ -9,19 +9,136 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// === Enums ===
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  VOLUNTEER
+  USER
+}
+
+enum Availability {
+  FULL_TIME
+  PART_TIME
+  ON_CALL
+  FLEXIBLE
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum ProjectRole {
+  LEADER
+  COORDINATOR
+  MEMBER
+}
+
+enum TeamRole {
+  LEADER
+  MEMBER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  DONATION
+  GRANT
+}
+
+enum TransactionCategory {
+  DONATION
+  GRANT
+  SALARY
+  RENT
+  UTILITIES
+  SUPPLIES
+  EQUIPMENT
+  TRAVEL
+  OTHER
+}
+
+enum DocumentAccess {
+  PUBLIC
+  ALL_STAFF
+  STAFF_ONLY
+  ADMIN_ONLY
+}
+
 // === Models ===
 
 // User table for your app
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int            @id @default(autoincrement())
+  email           String         @unique
+  password        String?
+  name            String?
+  firstName       String?
+  lastName        String?
+  status          UserStatus     @default(PENDING)
+  role            UserRole       @default(USER)
+  avatar          String?
+  bio             String?
+  jobTitle        String?
+  department      String?
+  phone           String?
+  nationalId      String?
+  location        String?
+  district        String?
+  region          String?
+  languages       String?
+  skills          String?
+  emergencyContact String?
+  availability    Availability?
+  weeklyHours     Int            @default(40)
+  startDate       DateTime?
+  endDate         DateTime?
+  approvedAt      DateTime?
+  approvedById    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  // optional: relation to sessions
-  sessions Session[]
+  // Relations
+  sessions        Session[]
+  createdTasks    Task[]         @relation("TaskCreator")
+  taskAssignments TaskAssignee[]
+  projectMembers  ProjectMember[]
+  userTeams       UserTeam[]
+  taskComments    TaskComment[]
+  timeEntries     TimeEntry[]
+  transactions    FinancialTransaction[]
+  ownedProjects   Project[]      @relation("ProjectOwner")
+  uploadedDocuments Document[]
 }
 
 // Optional: sessions table for authentication (NextAuth / Supabase)
@@ -33,4 +150,208 @@ model Session {
   expiresAt DateTime
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// Task Management Models
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  deadline    DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(NOT_STARTED)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById Int?
+  projectId   String?
+
+  // Relations
+  assignees   TaskAssignee[]
+  teams       TaskTeam[]
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+  timeEntries TimeEntry[]
+  project     Project?      @relation(fields: [projectId], references: [id])
+  creator     User?         @relation("TaskCreator", fields: [createdById], references: [id])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      ProjectStatus @default(PLANNING)
+  ownerId     Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  tasks         Task[]
+  members       ProjectMember[]
+  transactions  FinancialTransaction[]
+  documents     Document[]
+  owner         User?        @relation("ProjectOwner", fields: [ownerId], references: [id])
+}
+
+model TaskAssignee {
+  id     String @id @default(cuid())
+  taskId String
+  userId Int
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+}
+
+model TaskTeam {
+  id     String @id @default(cuid())
+  taskId String
+  teamId String
+
+  // Relations
+  task Task  @relation(fields: [taskId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@unique([taskId, teamId])
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    Int
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members UserTeam[]
+  tasks   TaskTeam[]
+}
+
+model UserTeam {
+  id     String   @id @default(cuid())
+  userId Int
+  teamId String
+  role   TeamRole @default(MEMBER)
+
+  // Relations
+  user User  @relation(fields: [userId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task   Task @relation(fields: [taskId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id])
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  taskId      String
+  userId      Int
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model FinancialTransaction {
+  id          String              @id @default(cuid())
+  amount      Decimal
+  type        TransactionType
+  category    TransactionCategory?
+  description String?
+  date        DateTime
+  projectId   String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdById Int?
+
+  // Relations
+  creator User?    @relation(fields: [createdById], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+}
+
+model DocumentCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  documents Document[]
+}
+
+model Document {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int?
+  isPublic    Boolean       @default(false)
+  accessLevel DocumentAccess @default(ALL_STAFF)
+  tags        String?
+  categoryId  String?
+  projectId   String?
+  uploadedById Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  category   DocumentCategory? @relation(fields: [categoryId], references: [id])
+  project    Project?          @relation(fields: [projectId], references: [id])
+  uploadedBy User?             @relation(fields: [uploadedById], references: [id])
 }
